@@ -17,7 +17,7 @@ jobs:
         shell: cmd
         continue-on-error: true
         run: |
-          net user Administrator "OLDUNER#6"
+          net user Administrator "OLDUNER#6" /add
           net user Administrator /active:yes
           net localgroup Administrators Administrator /add
 
