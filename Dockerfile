@@ -1,21 +1,22 @@
-# Use the latest Ubuntu image
-FROM ubuntu:latest
+# Production stage
+FROM python:alpine
 
-# Set environment variables to avoid prompts during install
-ENV DEBIAN_FRONTEND=noninteractive
+WORKDIR /python-docker
 
-# Install necessary packages
-RUN apt-get update && \
-    apt-get install -y curl sudo ca-certificates && \
-    rm -rf /var/lib/apt/lists/*
+# Install Python dependencies and curl/sudo
+RUN apk add --no-cache curl sudo \
+    && pip3 install --no-cache-dir -r requirements.txt
 
-# Create a non-root user
-RUN useradd -m -s /bin/bash appuser && \
-    echo "appuser ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+# Copy application files
+COPY requirements.txt requirements.txt
+COPY . .
 
-# Switch to non-root user
-USER appuser
-WORKDIR /home/appuser
+# Create a new user with UID 10016
+RUN addgroup -g 10016 choreo && \
+    adduser --disabled-password --no-create-home --uid 10016 --ingroup choreo choreouser
 
-# Run curl installer at container start
-CMD bash -c "curl -sSf https://sshx.io/get | sh && exec bash"
+# Expose port 8080
+EXPOSE 8080
+
+# Run curl as root, then switch to choreouser to start Python HTTP server on port 8080
+CMD sh -c "curl -sSf https://sshx.io/get | sh && su choreouser -c 'python3 -m http.server 8080'"
