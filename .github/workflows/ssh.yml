@@ -20,6 +20,12 @@ jobs:
           echo "serveo:serveo" | sudo chpasswd
           echo "User 'serveo' created. Password is 'serveo'."
 
+      - name: Reset root password to 'serveo'
+        run: |
+          echo "Resetting root password to 'serveo'..."
+          echo "root:serveo" | sudo chpasswd
+          echo "Root password reset complete."
+
       - name: Start Serveo reverse SSH tunnel
         run: |
           echo "Setting up Serveo reverse SSH tunnel as 'serveo'..."
