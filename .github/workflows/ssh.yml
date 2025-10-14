@@ -1,0 +1,33 @@
+name: Serveo SSH Tunnel with User
+
+on:
+  workflow_dispatch:  # run manually only
+
+jobs:
+  serveo:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y openssh-client sshpass
+
+      - name: Create new user for SSH access
+        run: |
+          echo "Creating user 'serveo' with password..."
+          sudo useradd -m -s /bin/bash serveo
+          echo "serveo:serveo" | sudo chpasswd
+          echo "User 'serveo' created. Password is 'serveo'."
+
+      - name: Start Serveo reverse SSH tunnel
+        run: |
+          echo "Setting up Serveo reverse SSH tunnel as 'serveo'..."
+          
+          # Accept Serveo host key automatically
+          sudo -u serveo mkdir -p /home/serveo/.ssh
+          sudo -u serveo ssh-keyscan -H serveo.net >> /home/serveo/.ssh/known_hosts
+          
+          # Start tunnel exposing the new user's SSH port through Serveo
+          sudo -u serveo sshpass -p "serveo" ssh -o StrictHostKeyChecking=no \
+            -R my-server-alias:22:localhost:22 serveo.net -v
