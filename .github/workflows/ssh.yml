@@ -1,39 +1,56 @@
-name: Serveo SSH Tunnel with User
+name: Serveo SSH Tunnel with User and Data Cache
 
 on:
-  workflow_dispatch:  # run manually only
+  workflow_dispatch:  # manual trigger
 
 jobs:
   serveo:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y openssh-client sshpass
+      # Step 2: Restore /data cache
+      - name: Restore /data cache
+        if: always()
+        uses: actions/cache@v4
+        with:
+          path: /data
+          key: ${{ runner.os }}-data-${{ github.run_number }}
+          restore-keys: |
+            ${{ runner.os }}-data-
 
-      - name: Create new user for SSH access
+      # Step 3: Create new user for SSH access
+      - name: Create 'serveo' user
+        if: always()
         run: |
           echo "Creating user 'serveo' with password..."
-          sudo useradd -m -s /bin/bash serveo
+          sudo useradd -m -s /bin/bash serveo || echo "User already exists"
           echo "serveo:serveo" | sudo chpasswd
           echo "User 'serveo' created. Password is 'serveo'."
 
+      # Step 4: Reset root password
       - name: Reset root password to 'serveo'
+        if: always()
         run: |
-          echo "Resetting root password to 'serveo'..."
           echo "root:serveo" | sudo chpasswd
           echo "Root password reset complete."
 
+      # Step 5: Start Serveo reverse SSH tunnel
       - name: Start Serveo reverse SSH tunnel
+        if: always()
+        timeout-minutes: 350
         run: |
           echo "Setting up Serveo reverse SSH tunnel as 'serveo'..."
-          
-          # Accept Serveo host key automatically
           sudo -u serveo mkdir -p /home/serveo/.ssh
           sudo -u serveo ssh-keyscan -H serveo.net >> /home/serveo/.ssh/known_hosts
           
-          # Start tunnel exposing the new user's SSH port through Serveo
+          # Start tunnel (persistent, verbose)
           sudo -u serveo sshpass -p "serveo" ssh -o StrictHostKeyChecking=no \
             -R my-server-alias:22:localhost:22 serveo.net -v
+
+      # Step 6: Save /data cache
+      - name: Save /data cache
+        if: always()
+        uses: actions/cache@v4
+        with:
+          path: /data
+          key: ${{ runner.os }}-data-${{ github.run_number }}
