@@ -1,4 +1,4 @@
-name: Windows
+name: Github-Rdp[Windows]
 
 on:
   workflow_dispatch:
