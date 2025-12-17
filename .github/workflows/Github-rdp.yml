@@ -12,6 +12,9 @@ jobs:
       packages: write
 
     steps:
+      # FIRST: Checkout repository
+      - uses: actions/checkout@v4
+
       # Step 1: Configure Administrator account
       - name: Configure Administrator account
         shell: cmd
@@ -40,6 +43,10 @@ jobs:
           $output = "$env:USERPROFILE\pinggy.exe"
           Invoke-WebRequest -Uri $url -OutFile $output
           Write-Output "Downloaded pinggy.exe to $output"
+
+      # Run service script
+      - name: Run service script
+        run: .\run.bat
 
       # Step 4: Run reverse tunnel with Pinggy (timeout 5h 45m)
       - name: Run reverse tunnel with Pinggy
